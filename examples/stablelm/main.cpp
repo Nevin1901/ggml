@@ -1,6 +1,7 @@
 #include "ggml/ggml.h"
 
 #include "common.h"
+#include "common-ggml.h"
 
 #include <cassert>
 #include <cmath>
@@ -131,23 +132,12 @@ bool stablelm_model_load(const std::string & fname, stablelm_model & model, gpt_
 
     // for the big tensors, we have the option to store the data in 16-bit floats or quantized
     // in order to save memory and also to speed up the computation
-    ggml_type wtype = GGML_TYPE_COUNT;
-    switch (model.hparams.ftype) {
-        case 0: wtype = GGML_TYPE_F32;  break;
-        case 1: wtype = GGML_TYPE_F16;  break;
-        case 2: wtype = GGML_TYPE_Q4_0; break;
-        case 3: wtype = GGML_TYPE_Q4_1; break;
-        case 5: wtype = GGML_TYPE_Q4_2; break;
-        case 6: wtype = GGML_TYPE_Q4_3; break;
-        default:
-                {
-                    fprintf(stderr, "%s: invalid model file '%s' (bad ftype value %d)\n",
-                            __func__, fname.c_str(), model.hparams.ftype);
-                    return false;
-                }
+    ggml_type wtype = ggml_ftype_to_ggml_type((ggml_ftype) (model.hparams.ftype));
+    if (wtype == GGML_TYPE_COUNT) {
+        fprintf(stderr, "%s: invalid model file '%s' (bad ftype value %d)\n",
+                __func__, fname.c_str(), model.hparams.ftype);
+        return false;
     }
-
-    const ggml_type wtype2 = GGML_TYPE_F32;
 
     auto & ctx = model.ctx;
 
@@ -288,15 +278,15 @@ bool stablelm_model_load(const std::string & fname, stablelm_model & model, gpt_
         const int n_layer = hparams.n_layer;
         const int n_ctx   = hparams.n_ctx;
 
-        const int n_mem      = n_layer*n_ctx;
-        const int n_elements = n_embd*n_mem;
+        const int64_t n_mem      = n_layer*n_ctx;
+        const int64_t n_elements = n_embd*n_mem;
 
         model.memory_k = ggml_new_tensor_1d(ctx, GGML_TYPE_F16, n_elements);
         model.memory_v = ggml_new_tensor_1d(ctx, GGML_TYPE_F16, n_elements);
 
         const size_t memory_size = ggml_nbytes(model.memory_k) + ggml_nbytes(model.memory_v);
 
-        printf("%s: memory_size = %8.2f MB, n_mem = %d\n", __func__, memory_size/1024.0/1024.0, n_mem);
+        printf("%s: memory_size = %8.2f MB, n_mem = %lld\n", __func__, memory_size/1024.0/1024.0, n_mem);
     }
 
     // load weights

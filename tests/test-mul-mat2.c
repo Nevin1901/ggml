@@ -1887,7 +1887,7 @@ void vec_dot_gq_5(const int n, float * restrict s, const void * restrict x, cons
         const uint8_t * restrict p0 = pb0 + i*QK/2;
         const uint8_t * restrict p1 = pb1 + i*QK/2;
 
-        const int8x16_t m4b = vdupq_n_s8(0xf);
+        const uint8x16_t m4b = vdupq_n_u8(0xf);
         const int8x16_t s8b = vdupq_n_s8(0x8);
 
         const uint8x16_t v0_0 = vld1q_u8(p0);
@@ -2280,7 +2280,7 @@ void vec_dot_gq_6(const int n, float * restrict s, const void * restrict x, cons
         const uint8_t * restrict p0 = pb0 + i*16;
         const uint8_t * restrict p1 = pb1 + i*16;
 
-        const int8x16_t m4b = vdupq_n_s8(0xf);
+        const uint8x16_t m4b = vdupq_n_u8(0xf);
         const int8x16_t s8b = vdupq_n_s8(0x8);
 
         const uint8x16_t v0_0 = vld1q_u8(p0);
@@ -2386,9 +2386,9 @@ int main(int argc, const char ** argv) {
         method = atoi(argv[1]);
     }
 
-    float * src0 = (float *)malloc(sizeof(float)*M*K);
-    float * src1 = (float *)malloc(sizeof(float)*N*K);
-    float * dst  = (float *)malloc(sizeof(float)*M*N);
+    float * src0 = malloc(sizeof(float)*M*K);
+    float * src1 = malloc(sizeof(float)*N*K);
+    float * dst  = malloc(sizeof(float)*M*N);
 
     // allocate aligned memory
     //float * src0 = (float *)aligned_alloc(32, sizeof(float)*M*K);
